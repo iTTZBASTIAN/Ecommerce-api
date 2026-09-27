@@ -14,14 +14,20 @@ interface ApiService {
     suspend fun register(@Body user: User): Response<RegisterResponse>
 
     // ========== PERFIL DE USUARIO ==========
+    // [ERROR P1] ANTES: suspend fun getProfile(...): Response<UserProfile>
+    // CAMBIO: el tipo de respuesta pasa a UserResponse.
+    // POR QUÉ: el backend responde {"user": {...}}; los datos del usuario están un nivel más adentro.
     @GET("api/users/profile")
-    suspend fun getProfile(@Header("Authorization") token: String): Response<UserProfile>
+    suspend fun getProfile(@Header("Authorization") token: String): Response<UserResponse>
 
+    // [ERROR P1] ANTES: ...): Response<UserProfile>
+    // CAMBIO: el tipo de respuesta pasa a UserResponse.
+    // POR QUÉ: el backend responde {"message": "...", "user": {...}}.
     @PUT("api/users/profile")
     suspend fun updateProfile(
         @Header("Authorization") token: String,
         @Body profile: UpdateProfileRequest
-    ): Response<UserProfile>
+    ): Response<UserResponse>
 
     @PUT("api/auth/change-password")
     suspend fun changePassword(
@@ -58,26 +64,39 @@ interface ApiService {
     ): Response<AuthResponse>
 
     // ========== UBICACIONES ==========
+    // [ERROR 1] ANTES: suspend fun getCountries(): Response<List<Country>>
+    // CAMBIO: el tipo de respuesta pasa de List<Country> a CountriesResponse.
+    // POR QUÉ: el backend responde {"count": 5, "countries": [...]} (un objeto), no [...] (una lista).
     @GET("api/locations/countries")
-    suspend fun getCountries(): Response<List<Country>>
+    suspend fun getCountries(): Response<CountriesResponse>
 
     @POST("api/locations/countries")
     suspend fun createCountry(@Body request: CreateLocationRequest): Response<Country>
 
+    // [ERROR 1] ANTES: suspend fun getStates(...): Response<List<State>>
+    // CAMBIO: el tipo de respuesta pasa de List<State> a StatesResponse.
+    // POR QUÉ: el backend responde {"count": n, "states": [...]}.
     @GET("api/locations/states")
-    suspend fun getStates(@Query("country_id") countryId: Int? = null): Response<List<State>>
+    suspend fun getStates(@Query("country_id") countryId: Int? = null): Response<StatesResponse>
 
     @POST("api/locations/states")
     suspend fun createState(@Body request: CreateLocationRequest): Response<State>
 
+    // [ERROR 1] ANTES: suspend fun getCities(...): Response<List<City>>
+    // CAMBIO: el tipo de respuesta pasa de List<City> a CitiesResponse.
+    // POR QUÉ: el backend responde {"count": n, "cities": [...]}.
     @GET("api/locations/cities")
-    suspend fun getCities(@Query("state_id") stateId: Int? = null): Response<List<City>>
+    suspend fun getCities(@Query("state_id") stateId: Int? = null): Response<CitiesResponse>
 
     @POST("api/locations/cities")
     suspend fun createCity(@Body request: CreateLocationRequest): Response<City>
 
+    // [ERROR U1] ANTES: suspend fun getRoles(): Response<List<Role>>
+    // CAMBIO: el tipo de respuesta pasa de List<Role> a RolesResponse.
+    // POR QUÉ: Retrofit/Gson esperaba un arreglo "[" y el backend envía un objeto "{".
+    // Gson lanzaba "Expected BEGIN_ARRAY but was BEGIN_OBJECT" y el desplegable de roles quedaba vacío.
     @GET("api/auth/roles")
-    suspend fun getRoles(): Response<List<Role>>
+    suspend fun getRoles(): Response<RolesResponse>
 
 
     // ========== GESTIÓN DE CATEGORÍAS ==========
@@ -217,10 +236,13 @@ interface ApiService {
         @Query("per_page") perPage: Int = 10
     ): Response<SalesResponse>
 
+    // [ERROR C6] ANTES: ...): Response<Sale>
+    // CAMBIO: el tipo de respuesta pasa a SaleResponse.
+    // POR QUÉ: el backend responde {"sale": {...}}; la venta está un nivel más adentro.
     @GET("api/sales/{id}")
     suspend fun getSale(
         @Header("Authorization") token: String,
         @Path("id") saleId: Int
-    ): Response<Sale>
+    ): Response<SaleResponse>
 
 }
